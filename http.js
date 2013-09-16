@@ -46,8 +46,14 @@ var chain = module.exports.chain = function(/*reaction1, reaction2,... */) {
   return function(c, nextReaction){
     var reactionArray = reactionArraySource.slice(0)
     var next = function(input){
-      if(input)
-        return nextReaction && nextReaction()
+      if(input) {
+        if(input instanceof Error)
+          c.err = input
+        else
+          c.err = input.err
+        return nextReaction && nextReaction(c)
+      }
+
       var reaction = reactionArray.shift()
       if(reaction)
         invoke(reaction, c, next)
