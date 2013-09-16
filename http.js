@@ -14,6 +14,8 @@ var invoke = module.exports.invoke = function(reaction, c, next){
     return reaction(c.req, c.res, next)
   if(reaction.length == 4)
     return reaction(c.err, c.req, c.res, next)
+
+  return reaction()
 }
 
 var jsonResponse = module.exports.jsonResponse = function(res, next) {
@@ -31,34 +33,26 @@ var error = module.exports.error = function(message, code){
   return err
 }
 
-var reaction = module.exports.invokeReaction = function(/*inputChemical, reactionArray, reactionArray,... backupReactionArray*/) {
+var join = module.exports.join = function(/*reactionArray, reactionArray,... */) {
   var args = argumentsToArray(arguments)
-  var inputChemical = args.shift()
-  var backupReactionArray = args.pop()
-  var reactionArray = []
+  var reactionArraySource = []
   for(var i = 0; i<args.length; i++)
-    reactionArray = reactionArray.concat(args[i])
-  var next = function(err){
-    if(err) {
-      var backupReaction = backupReactionArray.shift()
-      inputChemical.err = err
-      return invoke(backupReaction, inputChemical, next)
-    }
-    var reaction = reactionArray.shift()
-    invoke(reaction, inputChemical, next)
-  }
-  next()
+    reactionArraySource = reactionArraySource.concat(args[i])
+  return chain(reactionArraySource)
 }
 
-var chain = module.exports.chain = function(/*reaction1, reaction2, ... */) {
-  var reactionArraySource = argumentsToArray(arguments)
-  return function(c, next){
+var chain = module.exports.chain = function(/*reaction1, reaction2,... */) {
+  var reactionArraySource = Array.isArray(arguments[0])?arguments[0]:argumentsToArray(arguments)
+  return function(c, nextReaction){
     var reactionArray = reactionArraySource.slice(0)
-    var next = function(err){
-      if(err)
-        inputChemical.err = err
+    var next = function(input){
+      if(input)
+        return nextReaction && nextReaction()
       var reaction = reactionArray.shift()
-      invoke(reaction, inputChemical, next)
+      if(reaction)
+        invoke(reaction, c, next)
+      else
+        nextReaction && nextReaction()
     }
     next()
   }
