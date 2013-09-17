@@ -10,8 +10,7 @@
     "url": "git://github.com/outbounder/organic-alchemy.git"
   },
   "dependencies": {
-    "organic": "0.1.1",
-    "path-to-regexp": "*"
+    "organic": "0.1.1"
   },
   "devDependencies": {
     "jasmine-node": "latest"
