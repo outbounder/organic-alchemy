@@ -33,7 +33,7 @@ var error = module.exports.error = function(message, code){
   return err
 }
 
-var join = module.exports.join = function(/*reactionArray, reactionArray,... */) {
+var join = module.exports.join = function(/*reactionArray1, reactionArray2,... */) {
   var args = argumentsToArray(arguments)
   var reactionArraySource = []
   for(var i = 0; i<args.length; i++)
@@ -42,19 +42,19 @@ var join = module.exports.join = function(/*reactionArray, reactionArray,... */)
 }
 
 var chain = module.exports.chain = function(/*reaction1, reaction2,... */) {
-  var reactionArraySource = Array.isArray(arguments[0])?arguments[0]:argumentsToArray(arguments)
+  var reactionArray = Array.isArray(arguments[0])?arguments[0]:argumentsToArray(arguments)
   return function(c, nextReaction){
-    var reactionArray = reactionArraySource.slice(0)
+    var index = 0
     var next = function(input){
       if(input) {
         if(input instanceof Error)
           c.err = input
         else
-          c.err = input.err
+          c = input
         return nextReaction && nextReaction(c)
       }
 
-      var reaction = reactionArray.shift()
+      var reaction = reactionArray[index++]
       if(reaction)
         invoke(reaction, c, next)
       else
@@ -64,7 +64,7 @@ var chain = module.exports.chain = function(/*reaction1, reaction2,... */) {
   }
 }
 
-var selectByMethod = module.exports.switchByMethod = function(input){
+var switchByMethod = module.exports.switchByMethod = function(input){
   return function(c, next) {
     return invoke(input[c.req.method], c, next)
   }
