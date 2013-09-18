@@ -55,7 +55,7 @@ var chain = module.exports.chain = function(/*reaction1, reaction2,... */) {
       if(reaction)
         invoke(reaction, c, next)
       else
-        parentReaction && parentReaction()
+        parentReaction && parentReaction(c)
     }
     next()
   }
