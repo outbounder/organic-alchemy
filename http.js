@@ -18,15 +18,6 @@ var invoke = module.exports.invoke = function(reaction, c, next){
   return reaction()
 }
 
-var jsonResponse = module.exports.jsonResponse = function(res, next) {
-  return function(err, data) {
-    if(err){ res.end(err); return next(err) }
-    res.end(JSON.stringify({result: data}))
-    res.result = data;
-    next()
-  }
-}
-
 var error = module.exports.error = function(message, code){
   var err = new Error(message)
   err.code = code
@@ -43,22 +34,28 @@ var join = module.exports.join = function(/*reactionArray1, reactionArray2,... *
 
 var chain = module.exports.chain = function(/*reaction1, reaction2,... */) {
   var reactionArray = Array.isArray(arguments[0])?arguments[0]:argumentsToArray(arguments)
-  return function(c, nextReaction){
+  return function(c, parentReaction){
     var index = 0
-    var next = function(input){
-      if(input) {
-        if(input instanceof Error)
-          c.err = input
-        else
-          c = input
-        return nextReaction && nextReaction(c)
+    var next = function(){
+      if(arguments.length > 0) {
+        if(arguments[0] instanceof Error)
+          c.err = arguments[0]
+        else 
+          if(arguments.length == 1)
+            c = arguments[0]
+          else
+            if(arguments.length == 2) {
+              c.err = arguments[0] 
+              c.res.body = arguments[1]
+            }
+        if(c.err)
+          return parentReaction && parentReaction(c)
       }
-
       var reaction = reactionArray[index++]
       if(reaction)
         invoke(reaction, c, next)
       else
-        nextReaction && nextReaction()
+        parentReaction && parentReaction()
     }
     next()
   }
